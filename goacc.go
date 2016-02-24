@@ -121,11 +121,22 @@ func usersHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	if len(os.Args) > 1 && os.Args[1] == "createdb" {
-		CreateDb()
-		log.Println("Database created successfully.")
-		os.Exit(0)
+	var dsn string
+	if len(os.Args) >= 2 {
+		dsn = os.Args[1]
+	} else {
+		dsn = "password=goacc user=goacc dbname=goacc sslmode=disable"
+	}
+	if len(os.Args) >= 3 {
+		if os.Args[2] == "createdb" {
+			CreateDb()
+			log.Println("Database created successfully.")
+			os.Exit(0)
+		} else {
+			log.Fatal("Usage: goacc [dsn [createdb]]")
+		}
 	}
 
+	SetDsn(dsn)
 	log.Fatal(http.ListenAndServe(":8080", GetRouter()))
 }

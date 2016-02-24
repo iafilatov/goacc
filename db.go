@@ -7,8 +7,10 @@ import (
 	_ "github.com/lib/pq"
 )
 
+var dsn string
+
 func GetDb() (db *sql.DB) {
-	db, err := sql.Open("postgres", "password=goacc user=goacc dbname=goacc sslmode=disable")
+	db, err := sql.Open("postgres", dsn)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -27,4 +29,8 @@ func CreateDb() {
 	if _, err := db.Exec(sqlCreate); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func SetDsn(d string) {
+	dsn = d
 }
