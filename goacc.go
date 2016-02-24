@@ -30,8 +30,8 @@ func balanceHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func depositHandler(w http.ResponseWriter, r *http.Request) {
-	var update BalanceUpdate
-	if err := UnmarshalBalanceUpdate(r, &update); err != nil {
+	update, err := UnmarshalBalanceUpdate(r)
+	if err != nil {
 		http.Error(w, err.Error(), 422)
 		return
 	}
@@ -45,8 +45,8 @@ func depositHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func withdrawHandler(w http.ResponseWriter, r *http.Request) {
-	var update BalanceUpdate
-	if err := UnmarshalBalanceUpdate(r, &update); err != nil {
+	update, err := UnmarshalBalanceUpdate(r)
+	if err != nil {
 		http.Error(w, err.Error(), 422)
 		return
 	}
@@ -61,8 +61,8 @@ func withdrawHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func tranferHandler(w http.ResponseWriter, r *http.Request) {
-	var trans BalanceTransfer
-	if err := UnmarshalBalanceTransfer(r, &trans); err != nil {
+	trans, err := UnmarshalBalanceTransfer(r)
+	if err != nil {
 		http.Error(w, err.Error(), 422)
 		return
 	}
@@ -81,15 +81,15 @@ func tranferHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func createHandler(w http.ResponseWriter, r *http.Request) {
-	var user User
-	if err := UnmarshalUser(r, &user); err != nil {
+	user, err := UnmarshalUser(r)
+	if err != nil {
 		http.Error(w, err.Error(), 422)
 		return
 	}
 
 	db := GetDb()
 	defer db.Close()
-	if err := CreateUser(db, &user); err != nil {
+	if err := CreateUser(db, user); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -101,22 +101,10 @@ func usersHandler(w http.ResponseWriter, r *http.Request) {
 	db := GetDb()
 	defer db.Close()
 
-	sqlGetAll := "SELECT id, name, balance FROM users"
-	rows, err := db.Query(sqlGetAll)
-	defer rows.Close()
+	users, err := GetUsers(db)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-
-	users := []User{}
-	for rows.Next() {
-		var user User
-		if err := rows.Scan(&user.Id, &user.Name, &user.Balance); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-		users = append(users, user)
-	}
-
 	JsonResponse(w, users)
 }
 

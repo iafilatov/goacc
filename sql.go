@@ -68,11 +68,15 @@ func PerformBalanceTransfer(db *sql.DB, amount decimal.Decimal, idFrom, idTo int
 }
 
 func CreateUser(db *sql.DB, user *User) (err error) {
-	_, err = db.Exec(
-		"INSERT INTO users (name, balance) VALUES ($1, $2)",
+	var userId int
+	if err = db.QueryRow(
+		"INSERT INTO users (name, balance) VALUES ($1, $2) RETURNING id",
 		user.Name,
 		user.Balance,
-	)
+	).Scan(&userId); err != nil {
+		return
+	}
+	user.Id = userId
 	return
 }
 
@@ -90,4 +94,22 @@ func GetBalance(db *sql.DB, userId int) (balance decimal.Decimal, err error) {
 		return
 	}
 	return decimal.NewFromString(balanceStr)
+}
+
+func GetUsers(db *sql.DB) (users []User, err error) {
+	rows, err := db.Query("SELECT id, name, balance FROM users")
+	if err != nil {
+		return
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var user User
+		if err = rows.Scan(&user.Id, &user.Name, &user.Balance); err != nil {
+			return
+		}
+		users = append(users, user)
+	}
+	err = rows.Err()
+	return
 }
